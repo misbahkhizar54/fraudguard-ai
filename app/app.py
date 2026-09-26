@@ -1,6 +1,13 @@
 # FraudGuard Flask application
 
-from flask import Flask, render_template, request, session
+from flask import (
+    Flask,
+    render_template,
+    request,
+    session,
+    redirect,
+    url_for
+)
 
 from model_service import (
     model_config,
@@ -14,7 +21,14 @@ from genai_service import (
 )
 import pandas as pd
 from pathlib import Path
-from database import save_case, get_all_cases
+from database import (
+    save_case,
+    get_all_cases,
+    create_chat_session,
+    save_chat_message,
+    get_chat_sessions,
+    get_chat_messages
+)
 
 
 app = Flask(__name__)
@@ -327,20 +341,50 @@ def cases():
     )
 
 
-
 @app.route(
     "/assistant",
     methods=["GET", "POST"]
 )
 def ai_assistant():
 
-    if "assistant_history" not in session:
-        session["assistant_history"] = []
-
-    history = session["assistant_history"]
     current_prediction = session.get(
         "current_prediction"
     )
+
+    chat_session_id = session.get(
+        "chat_session_id"
+    )
+
+    # Create a new chat session when needed
+    if chat_session_id is None:
+
+        transaction_id = None
+        risk_level = None
+        fraud_score = None
+
+        if current_prediction:
+
+            transaction_id = current_prediction.get(
+                "demo_position"
+            )
+
+            risk_level = current_prediction.get(
+                "risk_level"
+            )
+
+            fraud_score = current_prediction.get(
+                "fraud_percentage"
+            )
+
+        chat_session_id = create_chat_session(
+            transaction_id=transaction_id,
+            risk_level=risk_level,
+            fraud_score=fraud_score
+        )
+
+        session["chat_session_id"] = (
+            chat_session_id
+        )
 
     if request.method == "POST":
 
@@ -351,24 +395,75 @@ def ai_assistant():
 
         if question:
 
+            save_chat_message(
+                chat_session_id,
+                "user",
+                question
+            )
+
             ai_result = ask_fraud_assistant(
                 question,
                 current_prediction
             )
 
-
             answer = ai_result["answer"]
 
-            history.append({
-                "question": question,
-                "answer": answer
-            })
+            save_chat_message(
+                chat_session_id,
+                "assistant",
+                answer
+            )
 
-            session["assistant_history"] = history
+    history = get_chat_messages(
+        chat_session_id
+    )
 
     return render_template(
         "assistant.html",
         history=history
+    )
+
+
+@app.route("/assistant/new")
+def new_chat():
+
+    session.pop(
+        "chat_session_id",
+        None
+    )
+
+    return redirect(
+        url_for("ai_assistant")
+    )
+
+
+@app.route("/assistant/history")
+def chat_history():
+
+    chats = get_chat_sessions()
+
+    return render_template(
+        "chat_history.html",
+        chats=chats
+    )
+
+
+@app.route("/assistant/chat/<int:chat_id>")
+def open_chat(chat_id):
+
+    messages = get_chat_messages(
+        chat_id
+    )
+
+    if not messages:
+        return redirect(
+            url_for("chat_history")
+        )
+
+    session["chat_session_id"] = chat_id
+
+    return redirect(
+        url_for("ai_assistant")
     )
 
 

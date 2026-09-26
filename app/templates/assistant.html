@@ -19,8 +19,31 @@ FraudGuard AI | AI Assistant
         </p>
     </div>
 
-    <div class="engine-badge">
-        Qwen3 1.7B · Local
+
+    <div class="assistant-header-actions">
+
+        <div class="assistant-action-buttons">
+
+            <a
+                href="{{ url_for('chat_history') }}"
+                class="assistant-history-button"
+            >
+                Investigation History
+            </a>
+
+            <a
+                href="{{ url_for('new_chat') }}"
+                class="assistant-new-button"
+            >
+                + New Investigation
+            </a>
+
+        </div>
+
+        <div class="engine-badge">
+            Qwen3 1.7B · Local
+        </div>
+
     </div>
 
 </div>
@@ -30,15 +53,7 @@ FraudGuard AI | AI Assistant
 
     <div class="assistant-intro">
 
-        <div>
-            <h2>FraudGuard Assistant</h2>
 
-            <p>
-                This assistant supports fraud investigation
-                using FraudGuard model information.
-                Final case decisions remain with the human analyst.
-            </p>
-        </div>
 
         <span class="assistant-status">
             ● AI Online
@@ -97,28 +112,34 @@ FraudGuard AI | AI Assistant
 
         {% for message in history %}
 
-        <div class="user-message">
+        {% if message["role"] == "user" %}
 
-            <strong>You</strong>
+            <div class="user-message">
 
-            <p>
-                {{ message.question }}
-            </p>
+                <strong>You</strong>
 
-        </div>
+                <p>
+                    {{ message["message"] }}
+                </p>
 
+            </div>
 
-        <div class="assistant-message assistant-response">
+        {% elif message["role"] == "assistant" %}
 
-            <strong>FraudGuard AI</strong>
+            <div class="assistant-message assistant-response">
 
-            <p class="assistant-answer">
-                {{ message.answer }}
-            </p>
+                <strong>FraudGuard AI</strong>
 
-        </div>
+                <p class="assistant-answer">
+                    {{ message["message"] }}
+                </p>
 
-        {% endfor %}
+            </div>
+
+        {% endif %}
+
+    {% endfor %}
+
 
 
         <div

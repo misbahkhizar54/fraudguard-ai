@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}
+FraudGuard AI | Investigation History
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Investigation History</h1>
+
+        <p>
+            Review previous FraudGuard AI investigation
+            sessions and model-assisted analysis.
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('new_chat') }}"
+        class="assistant-new-button"
+    >
+        + New Investigation
+    </a>
+
+</div>
+
+
+<section class="dashboard-panel investigation-history-panel">
+
+    {% if chats %}
+
+        <div class="investigation-history-list">
+
+            {% for chat in chats %}
+
+            <a
+                href="{{ url_for('open_chat', chat_id=chat['id']) }}"
+                class="investigation-history-card"
+            >
+
+                <div class="investigation-history-main">
+
+                    <div class="investigation-history-title">
+
+                        <h3>
+                            Investigation Session #{{ chat["id"] }}
+                        </h3>
+
+                        <span class="investigation-date">
+                            {{ chat["created_at"] }}
+                        </span>
+
+                    </div>
+
+
+                    {% if chat["first_question"] %}
+
+                    <p class="investigation-preview">
+                        {{ chat["first_question"] }}
+                    </p>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="investigation-history-meta">
+
+                    {% if chat["risk_level"] %}
+
+                    <span class="
+                        investigation-risk
+                        {% if chat['risk_level'] == 'High' %}
+                            investigation-risk-high
+                        {% elif chat['risk_level'] == 'Medium' %}
+                            investigation-risk-medium
+                        {% else %}
+                            investigation-risk-low
+                        {% endif %}
+                    ">
+                        {{ chat["risk_level"] }} Risk
+                    </span>
+
+                    {% else %}
+
+                    <span class="investigation-risk">
+                        General
+                    </span>
+
+                    {% endif %}
+
+
+                    {% if chat["fraud_score"] is not none %}
+
+                    <span class="investigation-score">
+                        {{ "%.2f"|format(chat["fraud_score"]) }}%
+                        model risk
+                    </span>
+
+                    {% endif %}
+
+
+                    <span class="investigation-open">
+                        Open Investigation →
+                    </span>
+
+                </div>
+
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <h3>No saved investigations yet</h3>
+
+            <p>
+                Completed FraudGuard AI conversations will
+                appear here after you begin an investigation.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

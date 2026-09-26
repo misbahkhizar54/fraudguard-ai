@@ -204,6 +204,12 @@ unless they are directly relevant to the question.
 
 16. Do not mention SHAP unless the analyst specifically asks about
     SHAP, feature influence, or model explanation.
+17. Never describe the fraud probability as the real-world likelihood
+    that fraud occurred. Describe it as the model-estimated fraud risk
+    or model fraud-risk score.
+18. Only discuss SHAP values or feature contributions when the analyst
+    specifically asks why the model produced the result, which features
+    influenced it, or asks about SHAP/explainability.
 """
 
     prompt = f"""
