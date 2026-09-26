@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}
+FraudGuard AI | Cases
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Investigation Cases</h1>
+
+        <p>
+            Review transactions investigated by FraudGuard
+            and the decisions made by analysts.
+        </p>
+    </div>
+
+    
+
+</div>
+
+
+<section class="cases-summary-grid">
+
+    <div class="case-summary-card">
+
+        <span class="case-summary-label">
+            Total Cases
+        </span>
+
+        <strong class="case-summary-value">
+            {{ total_cases }}
+        </strong>
+
+        <p>
+            Recorded investigations
+        </p>
+
+    </div>
+
+
+    <div class="case-summary-card">
+
+        <span class="case-summary-label">
+            Escalated
+        </span>
+
+        <strong class="case-summary-value">
+            {{ escalated_cases }}
+        </strong>
+
+        <p>
+            Requires further investigation
+        </p>
+
+    </div>
+
+
+    <div class="case-summary-card">
+
+        <span class="case-summary-label">
+            Verification Required
+        </span>
+
+        <strong class="case-summary-value">
+            {{ verification_cases }}
+        </strong>
+
+        <p>
+            Awaiting additional verification
+        </p>
+
+    </div>
+
+
+    <div class="case-summary-card">
+
+        <span class="case-summary-label">
+            Cleared
+        </span>
+
+        <strong class="case-summary-value">
+            {{ cleared_cases }}
+        </strong>
+
+        <p>
+            Closed by analyst
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="dashboard-panel cases-history-panel">
+
+    <div class="panel-header">
+
+        <div>
+            <h2>Case History</h2>
+
+            <p>
+                Stored fraud investigations and analyst decisions.
+            </p>
+        </div>
+
+        {% if cases %}
+
+        <span class="record-count">
+            {{ total_cases }} records
+        </span>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if cases %}
+
+    <div class="cases-table-wrapper">
+
+        <table class="cases-table">
+
+            <thead>
+                <tr>
+                    <th>Case</th>
+                    <th>Transaction</th>
+                    <th>Amount</th>
+                    <th>Fraud Risk</th>
+                    <th>Risk Level</th>
+                    <th>Model Decision</th>
+                    <th>Analyst Decision</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for case in cases %}
+
+                <tr>
+
+                    <td class="case-id">
+                        #{{ case.id }}
+                    </td>
+
+                    <td>
+                        {{ case.demo_position }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f" | format(case.transaction_amount) }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f" | format(case.fraud_probability * 100) }}%
+                    </td>
+
+                    <td>
+                        <span
+                            class="risk-badge risk-{{ case.risk_level | lower }}"
+                        >
+                            {{ case.risk_level }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ case.model_decision }}
+                    </td>
+
+                    <td>
+                        {{ case.analyst_decision }}
+                    </td>
+
+                    <td>
+                        <span
+                            class="case-status
+                            {% if case.case_status == 'Cleared' %}
+                                status-cleared
+                            {% elif case.case_status == 'Escalated' %}
+                                status-escalated
+                            {% elif case.case_status == 'Verification Required' %}
+                                status-verification
+                            {% endif %}"
+                        >
+                            {{ case.case_status }}
+                        </span>
+                    </td>
+
+                    <td class="case-date">
+                        <span class="case-date-main">
+                            {{ case.created_at[:10] }}
+                        </span>
+
+                        <span class="case-time">
+                            {{ case.created_at[11:19] }}
+                        </span>
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <h3>No investigation cases yet</h3>
+
+        <p>
+            Analyze a transaction and submit an analyst
+            decision to create the first case.
+        </p>
+
+        <a
+            href="{{ url_for('analyze') }}"
+            class="analyze-button"
+        >
+            Analyze Transaction
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

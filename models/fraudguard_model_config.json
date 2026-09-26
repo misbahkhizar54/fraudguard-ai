@@ -1,0 +1,23 @@
+{
+    "model_name": "XGBoost Model 2A",
+    "threshold": 0.7271288633346558,
+    "validation": {
+        "roc_auc": 0.9155328366430454,
+        "pr_auc": 0.5432825441563265,
+        "precision": 0.5882601351351351,
+        "recall": 0.457922419460881,
+        "f1": 0.5149722735182436
+    },
+    "test": {
+        "accuracy": 0.965545658775584,
+        "roc_auc": 0.8993201112602254,
+        "pr_auc": 0.50283024010529,
+        "precision": 0.5056057866184448,
+        "recall": 0.45345442750567627,
+        "f1": 0.4781121751025992,
+        "true_negatives": 84131,
+        "false_positives": 1367,
+        "false_negatives": 1685,
+        "true_positives": 1398
+    }
+}

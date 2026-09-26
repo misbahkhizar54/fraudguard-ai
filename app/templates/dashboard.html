@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}
+FraudGuard AI | Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Fraud Intelligence Dashboard</h1>
+        <p>
+            Monitor transaction risk, fraud alerts,
+            and analyst investigations.
+        </p>
+    </div>
+
+    <div class="engine-badge">
+        XGBoost Model 2A
+    </div>
+</div>
+
+
+<section class="stats-grid">
+
+    <div class="stat-card">
+        <p>Fraud Alert Threshold</p>
+        <h2>{{ threshold }}%</h2>
+        <span>Locked validation threshold</span>
+    </div>
+
+    <div class="stat-card">
+        <p>Model Test PR-AUC</p>
+        <h2>{{ pr_auc }}</h2>
+        <span>Imbalanced-data performance</span>
+    </div>
+
+    <div class="stat-card">
+        <p>Fraud Recall</p>
+        <h2>{{ recall }}%</h2>
+        <span>Fraud cases detected on test data</span>
+    </div>
+
+    <div class="stat-card">
+        <p>Fraud Precision</p>
+        <h2>{{ precision }}%</h2>
+        <span>Alert precision on test data</span>
+    </div>
+
+</section>
+
+<section class="dashboard-panel">
+
+    <div class="panel-header">
+        <div>
+            <h2>Live Investigation Overview</h2>
+            <p>
+                Current fraud-risk cases and analyst outcomes
+                stored in FraudGuard.
+            </p>
+        </div>
+    </div>
+
+    <div class="case-kpi-grid">
+
+        <div class="case-kpi-card">
+            <span>Total Cases</span>
+            <strong>{{ case_summary.total }}</strong>
+            <p>Saved analyst investigations</p>
+        </div>
+
+        <div class="case-kpi-card">
+            <span>High Risk</span>
+            <strong>{{ case_summary.high }}</strong>
+            <p>Cases at or above the fraud-alert threshold</p>
+        </div>
+
+        <div class="case-kpi-card">
+            <span>Verification Required</span>
+            <strong>{{ case_summary.verification }}</strong>
+            <p>Cases awaiting additional verification</p>
+        </div>
+
+        <div class="case-kpi-card">
+            <span>Escalated</span>
+            <strong>{{ case_summary.escalated }}</strong>
+            <p>Cases escalated by an analyst</p>
+        </div>
+
+    </div>
+
+</section>
+
+<section class="dashboard-panel">
+
+    <div class="panel-header">
+        <div>
+            <h2>Investigation Analytics</h2>
+            <p>
+                Visual breakdown of model risk levels
+                and analyst case outcomes.
+            </p>
+        </div>
+    </div>
+
+    <div
+        class="dashboard-charts"
+        id="dashboardCharts"
+        data-high="{{ case_summary.high }}"
+        data-medium="{{ case_summary.medium }}"
+        data-low="{{ case_summary.low }}"
+        data-cleared="{{ case_summary.cleared }}"
+        data-verification="{{ case_summary.verification }}"
+        data-escalated="{{ case_summary.escalated }}"
+    >
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+                <h3>Risk Distribution</h3>
+                <p>Saved cases by model risk level</p>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="riskChart"></canvas>
+            </div>
+
+        </div>
+
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+                <h3>Analyst Outcomes</h3>
+                <p>Saved cases by analyst disposition</p>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="outcomeChart"></canvas>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="dashboard-panel">
+
+    <div class="panel-header">
+        <div>
+            <h2>FraudGuard Detection Engine</h2>
+            <p>
+                Machine learning risk scoring with
+                SHAP-based explainability.
+            </p>
+        </div>
+    </div>
+
+    <div class="model-details">
+
+        <div>
+            <span>Production Model</span>
+            <strong>{{ model_name }}</strong>
+        </div>
+
+        <div>
+            <span>Risk Threshold</span>
+            <strong>{{ threshold }}%</strong>
+        </div>
+
+        <div>
+            <span>Explainability</span>
+            <strong>SHAP Enabled</strong>
+        </div>
+
+        <div>
+            <span>System Status</span>
+            <strong>Online</strong>
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="dashboard-panel">
+
+    <h2>Investigation Workflow</h2>
+
+    <div class="workflow">
+
+        <div class="workflow-step">
+            <strong>1</strong>
+            <span>Transaction</span>
+        </div>
+
+        <div class="workflow-step">
+            <strong>2</strong>
+            <span>ML Risk Score</span>
+        </div>
+
+        <div class="workflow-step">
+            <strong>3</strong>
+            <span>SHAP Explanation</span>
+        </div>
+
+        <div class="workflow-step">
+            <strong>4</strong>
+            <span>AI Investigation</span>
+        </div>
+
+        <div class="workflow-step">
+            <strong>5</strong>
+            <span>Analyst Decision</span>
+        </div>
+
+    </div>
+
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const chartsData = document.getElementById("dashboardCharts");
+    const riskCanvas = document.getElementById("riskChart");
+    const outcomeCanvas = document.getElementById("outcomeChart");
+
+    if (!chartsData) {
+        return;
+    }
+
+    const highRisk = Number(chartsData.dataset.high);
+    const mediumRisk = Number(chartsData.dataset.medium);
+    const lowRisk = Number(chartsData.dataset.low);
+
+    const cleared = Number(chartsData.dataset.cleared);
+    const verification = Number(chartsData.dataset.verification);
+    const escalated = Number(chartsData.dataset.escalated);
+
+    if (riskCanvas) {
+
+        new Chart(riskCanvas, {
+            type: "doughnut",
+
+            data: {
+                labels: [
+                    "High Risk",
+                    "Medium Risk",
+                    "Low Risk"
+                ],
+
+                datasets: [{
+                    data: [
+                        highRisk,
+                        mediumRisk,
+                        lowRisk
+                    ],
+
+                    backgroundColor: [
+                        "#dc2626",
+                        "#d97706",
+                        "#059669"
+                    ],
+
+                    borderWidth: 0
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                },
+
+                cutout: "68%"
+            }
+        });
+
+    }
+
+
+    if (outcomeCanvas) {
+
+        new Chart(outcomeCanvas, {
+            type: "bar",
+
+            data: {
+                labels: [
+                    "Cleared",
+                    "Verification Required",
+                    "Escalated"
+                ],
+
+                datasets: [{
+                    label: "Cases",
+
+                    data: [
+                        cleared,
+                        verification,
+                        escalated
+                    ],
+
+                    backgroundColor: [
+                        "#059669",
+                        "#d97706",
+                        "#dc2626"
+                    ],
+
+                    borderRadius: 6
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+
+                        ticks: {
+                            precision: 0
+                        },
+
+                        grid: {
+                            color: "#e5e7eb"
+                        }
+                    },
+
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+    }
+
+});
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,611 @@
+{% extends "base.html" %}
+
+{% block title %}
+FraudGuard AI | Analyze Transaction
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Analyze Transaction</h1>
+        <p>
+            Score a transaction using the FraudGuard
+            machine learning detection engine.
+        </p>
+    </div>
+
+    <div class="engine-badge">
+        ML + SHAP Analysis
+    </div>
+</div>
+
+
+<section class="dashboard-panel">
+
+    <div class="panel-header">
+        <h2>Transaction Analysis</h2>
+        <p>
+            Analyze a transaction using XGBoost and generate a SHAP-based explanation.
+        </p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        
+        <div class="analysis-control">
+
+            <div class="analysis-control-header">
+
+                <div>
+                    <span class="control-eyebrow">
+                        TRANSACTION INPUT
+                    </span>
+
+                    <h3>Analyze Transaction</h3>
+
+                    <p>
+                        Select a prepared IEEE-CIS test transaction
+                        or upload one model-ready transaction CSV.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="analysis-form-row">
+
+                <div class="analysis-field">
+
+                    <label for="risk_example">
+                        Demo Transaction
+                    </label>
+
+                    <div
+                        class="custom-risk-select"
+                        id="customRiskSelect"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="risk_example"
+                            id="risk_example"
+                            value="{{ selected_risk or 'high' }}"
+                        >
+
+                        <button
+                            type="button"
+                            class="custom-select-trigger"
+                            id="riskSelectTrigger"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                        >
+                            <span id="riskSelectText">
+                                {% if selected_risk == "medium" %}
+                                    Medium-Risk Example
+                                {% elif selected_risk == "low" %}
+                                    Low-Risk Example
+                                {% else %}
+                                    High-Risk Example
+                                {% endif %}
+                            </span>
+
+                            <span class="custom-select-arrow"></span>
+                        </button>
+
+
+                        <div
+                            class="custom-select-menu"
+                            id="riskSelectMenu"
+                            role="listbox"
+                        >
+
+                            <button
+                                type="button"
+                                class="custom-select-option
+                                {% if selected_risk == 'high' or not selected_risk %}selected{% endif %}"
+                                data-value="high"
+                                data-label="High-Risk Example"
+                                role="option"
+                            >
+                                <span class="risk-option-dot high-dot"></span>
+
+                                <span class="risk-option-content">
+                                    <strong>High-Risk Example</strong>
+                                    <small>
+                                        At or above the fraud-alert threshold
+                                    </small>
+                                </span>
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="custom-select-option
+                                {% if selected_risk == 'medium' %}selected{% endif %}"
+                                data-value="medium"
+                                data-label="Medium-Risk Example"
+                                role="option"
+                            >
+                                <span class="risk-option-dot medium-dot"></span>
+
+                                <span class="risk-option-content">
+                                    <strong>Medium-Risk Example</strong>
+                                    <small>
+                                        Review-band transaction
+                                    </small>
+                                </span>
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="custom-select-option
+                                {% if selected_risk == 'low' %}selected{% endif %}"
+                                data-value="low"
+                                data-label="Low-Risk Example"
+                                role="option"
+                            >
+                                <span class="risk-option-dot low-dot"></span>
+
+                                <span class="risk-option-content">
+                                    <strong>Low-Risk Example</strong>
+                                    <small>
+                                        Below the review band
+                                    </small>
+                                </span>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <span class="field-helper">
+                        Prepared from the held-out IEEE-CIS test dataset.
+                    </span>
+
+                </div>
+
+
+                <div class="analysis-field">
+
+                    <label for="transaction_file">
+                        Upload Transaction CSV
+                    </label>
+
+                    <input
+                        type="file"
+                        name="transaction_file"
+                        id="transaction_file"
+                        accept=".csv"
+                    >
+
+                    <span class="field-helper">
+                        Optional. Upload one model-ready transaction
+                        containing the required FraudGuard features.
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="analyze-button analysis-submit"
+                >
+                    Analyze Transaction
+                </button>
+
+            </div>
+
+
+            {% if upload_error %}
+                <div class="upload-error">
+                    {{ upload_error }}
+                </div>
+            {% endif %}
+
+        </div>
+
+        
+    
+        
+        {% if ai_summary %}
+
+        <div class="ai-summary-card">
+
+            <div class="ai-summary-header">
+                <div>
+                    <span class="ai-label">GENERATIVE AI</span>
+                    <h3>AI Investigation Summary</h3>
+                </div>
+
+                <span class="ai-model-badge">
+                    Qwen3 1.7B · Local
+                </span>
+            </div>
+
+            <p class="ai-summary-text">
+                {{ ai_summary }}
+            </p>
+
+            <div class="ai-summary-note">
+                Generated from the XGBoost risk score and SHAP explanation.
+                Final disposition remains with the human analyst.
+            </div>
+
+        </div>
+
+        {% endif %}
+
+
+        {% if transaction_preview %}
+
+        <div class="transaction-preview">
+
+            <div>
+                <span>Test Position</span>
+                <strong>
+                    {{ transaction_preview.position }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Transaction Amount</span>
+                <strong>
+                    {{ transaction_preview.amount }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Product Code</span>
+                <strong>
+                    {{ transaction_preview.product }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Card Network</span>
+                <strong>
+                    {{ transaction_preview.network }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Card Type</span>
+                <strong>
+                    {{ transaction_preview.card_type }}
+                </strong>
+            </div>
+
+        </div>
+
+
+        {% endif %}
+
+
+    </form>
+
+    {% if result and not ai_summary %}
+
+    <form
+        method="POST"
+        class="ai-generate-form"
+        id="aiGenerateForm"
+    >
+
+        <input
+            type="hidden"
+            name="risk_example"
+            value="{{ selected_risk }}"
+        >
+
+        <input
+            type="hidden"
+            name="generate_ai"
+            value="true"
+        >
+
+        <button
+            type="submit"
+            class="generate-ai-button"
+            id="generateAiButton"
+        >
+            <span id="aiButtonText">
+                Generate AI Investigation Summary
+            </span>
+
+            <span
+                id="aiSpinner"
+                class="ai-spinner"
+            ></span>
+        </button>
+
+        <span class="ai-generate-hint">
+            Uses the current XGBoost prediction and SHAP explanation
+        </span>
+
+    </form>
+
+    {% endif %}
+
+</section>
+
+
+{% if result %}
+
+<section class="dashboard-panel">
+
+    <div class="result-header">
+
+        <div>
+            <p>Fraud Risk Score</p>
+
+            <h2>
+                {{ result.fraud_percentage }}%
+            </h2>
+        </div>
+
+        <div class="risk-badge risk-{{ result.risk_level | lower }}">
+            {{ result.risk_level }} Risk
+        </div>
+
+    </div>
+
+
+    <div class="result-grid">
+
+        <div>
+            <span>Model Decision</span>
+            <strong>
+                {{ result.decision }}
+            </strong>
+        </div>
+
+        <div>
+            <span>Fraud Probability</span>
+            <strong>
+                {{ result.fraud_percentage }}%
+            </strong>
+        </div>
+
+        <div>
+            <span>Alert Threshold</span>
+            <strong>
+                {{ result.threshold_percentage }}%
+            </strong>
+        </div>
+
+    </div>
+
+</section>
+<section class="dashboard-panel analyst-panel">
+
+    <div class="panel-header">
+        <h2>Analyst Decision</h2>
+        <p>
+            Review the model score and SHAP explanation,
+            then choose the appropriate case action.
+        </p>
+    </div>
+
+    <form method="POST" class="analyst-actions">
+
+        <input
+            type="hidden"
+            name="risk_example"
+            value="{{ selected_risk }}"
+        >
+
+        <button
+            type="submit"
+            name="analyst_decision"
+            value="Clear"
+            class="decision-button clear-button"
+        >
+            Clear
+        </button>
+
+        <button
+            type="submit"
+            name="analyst_decision"
+            value="Verify"
+            class="decision-button verify-button"
+        >
+            Verify
+        </button>
+
+        <button
+            type="submit"
+            name="analyst_decision"
+            value="Escalate"
+            class="decision-button escalate-button"
+        >
+            Escalate
+        </button>
+
+    </form>
+
+</section>
+
+
+<section class="explanation-grid">
+
+    <div class="dashboard-panel">
+
+        <h2>Factors Increasing Risk</h2>
+
+        <div class="factor-list">
+
+            {% for factor in result.risk_increasing_factors %}
+
+            <div class="factor-item">
+
+                <div>
+                    <strong>
+                        {{ factor.feature }}
+                    </strong>
+
+                    <span>
+                        Value: {{ factor.value }}
+                    </span>
+                </div>
+
+                <b>
+                    +{{ "%.4f" | format(factor.shap_value) }}
+                </b>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-panel">
+
+        <h2>Factors Reducing Risk</h2>
+
+        <div class="factor-list">
+
+            {% for factor in result.risk_reducing_factors %}
+
+            <div class="factor-item">
+
+                <div>
+                    <strong>
+                        {{ factor.feature }}
+                    </strong>
+
+                    <span>
+                        Value: {{ factor.value }}
+                    </span>
+                </div>
+
+                <b>
+                    {{ "%.4f" | format(factor.shap_value) }}
+                </b>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("aiGenerateForm");
+
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener("submit", function () {
+
+        const button = document.getElementById("generateAiButton");
+        const buttonText = document.getElementById("aiButtonText");
+        const spinner = document.getElementById("aiSpinner");
+
+        buttonText.textContent = "Generating AI Summary... Please wait";
+        spinner.classList.add("show");
+        button.disabled = true;
+
+    });
+
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const customSelect =
+        document.getElementById("customRiskSelect");
+
+    const trigger =
+        document.getElementById("riskSelectTrigger");
+
+    const hiddenInput =
+        document.getElementById("risk_example");
+
+    const selectedText =
+        document.getElementById("riskSelectText");
+
+    if (!customSelect || !trigger || !hiddenInput) {
+        return;
+    }
+
+    const options =
+        customSelect.querySelectorAll(
+            ".custom-select-option"
+        );
+
+
+    function closeDropdown() {
+        customSelect.classList.remove("open");
+
+        trigger.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    }
+
+
+    trigger.addEventListener("click", function () {
+
+        const isOpen =
+            customSelect.classList.toggle("open");
+
+        trigger.setAttribute(
+            "aria-expanded",
+            isOpen ? "true" : "false"
+        );
+
+    });
+
+
+    options.forEach(function (option) {
+
+        option.addEventListener("click", function () {
+
+            const value =
+                option.dataset.value;
+
+            const label =
+                option.dataset.label;
+
+            hiddenInput.value = value;
+            selectedText.textContent = label;
+
+            options.forEach(function (item) {
+                item.classList.remove("selected");
+            });
+
+            option.classList.add("selected");
+
+            closeDropdown();
+
+        });
+
+    });
+
+
+    document.addEventListener("click", function (event) {
+
+        if (!customSelect.contains(event.target)) {
+            closeDropdown();
+        }
+
+    });
+
+});
+</script>
+
+{% endblock %}

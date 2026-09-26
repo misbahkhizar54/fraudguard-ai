@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}
+FraudGuard AI | AI Assistant
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>AI Investigation Assistant</h1>
+
+        <p>
+            Ask questions about fraud-risk predictions,
+            model evidence, SHAP explanations, and
+            investigation workflow.
+        </p>
+    </div>
+
+    <div class="engine-badge">
+        Qwen3 1.7B · Local
+    </div>
+
+</div>
+
+
+<section class="dashboard-panel assistant-panel">
+
+    <div class="assistant-intro">
+
+        <div>
+            <h2>FraudGuard Assistant</h2>
+
+            <p>
+                This assistant supports fraud investigation
+                using FraudGuard model information.
+                Final case decisions remain with the human analyst.
+            </p>
+        </div>
+
+        <span class="assistant-status">
+            ● AI Online
+        </span>
+
+    </div>
+
+
+    <div class="assistant-suggestions">
+
+        <button
+            type="button"
+            class="suggestion-button"
+            data-question="What does the fraud probability mean?"
+        >
+            What does the fraud probability mean?
+        </button>
+
+        <button
+            type="button"
+            class="suggestion-button"
+            data-question="What does the 72.71% fraud alert threshold mean?"
+        >
+            Explain the alert threshold
+        </button>
+
+        <button
+            type="button"
+            class="suggestion-button"
+            data-question="How should SHAP factors be interpreted?"
+        >
+            How should SHAP factors be interpreted?
+        </button>
+
+    </div>
+
+
+    <div
+        class="chat-window"
+        id="chatWindow"
+        aria-live="polite"
+    >
+
+        <div class="assistant-message">
+
+            <strong>FraudGuard AI</strong>
+
+            <p class="assistant-answer">
+                Ask me about FraudGuard predictions,
+                risk levels, SHAP explanations, or the
+                investigation workflow.
+            </p>
+
+        </div>
+
+
+        {% for message in history %}
+
+        <div class="user-message">
+
+            <strong>You</strong>
+
+            <p>
+                {{ message.question }}
+            </p>
+
+        </div>
+
+
+        <div class="assistant-message assistant-response">
+
+            <strong>FraudGuard AI</strong>
+
+            <p class="assistant-answer">
+                {{ message.answer }}
+            </p>
+
+        </div>
+
+        {% endfor %}
+
+
+        <div
+            class="assistant-message assistant-loading"
+            id="assistantLoading"
+            style="display: none;"
+        >
+
+            <strong>FraudGuard AI</strong>
+
+            <div class="assistant-thinking">
+
+                <span class="assistant-loading-spinner"></span>
+
+                <span>
+                    Analyzing your question...
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <form
+        method="POST"
+        class="assistant-input-area"
+        id="assistantForm"
+    >
+
+        <input
+            type="text"
+            name="question"
+            id="assistantQuestion"
+            placeholder="Ask FraudGuard AI a question..."
+            autocomplete="off"
+            maxlength="500"
+            required
+        >
+
+        <button
+            type="submit"
+            id="assistantSendButton"
+        >
+            <span id="assistantSendText">
+                Send
+            </span>
+        </button>
+
+    </form>
+
+
+    <p class="assistant-disclaimer">
+        FraudGuard AI provides model-support information,
+        not a final fraud determination.
+    </p>
+
+</section>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("assistantForm");
+    const input = document.getElementById("assistantQuestion");
+    const sendButton = document.getElementById("assistantSendButton");
+    const sendText = document.getElementById("assistantSendText");
+    const loadingMessage = document.getElementById("assistantLoading");
+    const chatWindow = document.getElementById("chatWindow");
+    const suggestionButtons = document.querySelectorAll(
+        ".suggestion-button"
+    );
+
+
+    suggestionButtons.forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const question = button.dataset.question;
+
+            input.value = question;
+            input.focus();
+
+        });
+
+    });
+
+
+    if (form) {
+
+        form.addEventListener("submit", function (event) {
+
+            const question = input.value.trim();
+
+            if (!question) {
+                event.preventDefault();
+                input.focus();
+                return;
+            }
+
+            input.value = question;
+
+            sendButton.disabled = true;
+            sendText.textContent = "Thinking...";
+
+            loadingMessage.style.display = "block";
+
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        });
+
+    }
+
+
+    if (chatWindow) {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+});
+</script>
+
+{% endblock %}
